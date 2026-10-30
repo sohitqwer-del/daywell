@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { indianFoods } from "./data/indianFoods";
+import { recognitionSchema } from "./recognitionContract";
 export const uid = () => crypto.randomUUID();
 export function dayKey(date = new Date()) {
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
@@ -46,6 +47,7 @@ export const foodSchema = z.object({
   vegetarian: z.boolean().optional(),
 });
 export const photoSchema = z.object({
+  recognition: recognitionSchema.optional(),
   id: z.string().uuid(),
   thumbnail: z
     .string()
@@ -65,6 +67,11 @@ export const photoSchema = z.object({
         fat: positive,
         eatenPercent: z.number().finite().min(0).max(100),
         nutritionKnown: z.boolean(),
+        catalogFoodId: z.string().max(100).optional(),
+        recognizedName: z.string().max(150).optional(),
+        recognitionConfidence: z.enum(["high", "medium", "low"]).optional(),
+        confirmed: z.boolean().optional(),
+        visibleServings: z.number().finite().min(0.05).max(20).optional(),
       }),
     )
     .max(20)
@@ -142,6 +149,17 @@ export const stateSchema = z.object({
     .default([]),
   dietPlan: dietPlanSchema.nullable().default(null),
   restDays: z.array(day).max(5000).default([]),
+  recognitionCorrections: z
+    .array(
+      z.object({
+        id,
+        label: z.string().min(1).max(150),
+        foodId: id,
+        date: day,
+      }),
+    )
+    .max(100)
+    .default([]),
   workoutPlan: workoutPlanSchema.nullable().default(null),
   planPreferences: z
     .object({
@@ -307,6 +325,7 @@ export function createState(): State {
     weeklyPlan: [],
     dietPlan: null,
     restDays: [],
+    recognitionCorrections: [],
     workoutPlan: null,
     planPreferences: {
       diet: "Any",

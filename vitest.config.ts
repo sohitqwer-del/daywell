@@ -1,7 +1,10 @@
 import { defineConfig } from "vitest/config";
 export default defineConfig({
   test: {
-    include: ["tests/*.test.ts"],
+    pool: "threads",
+    maxWorkers: 1,
+    fileParallelism: false,
+    include: ["tests/*.test.ts", "tests/*.test.tsx"],
     exclude: ["artifacts/**", "node_modules/**"],
   },
 });

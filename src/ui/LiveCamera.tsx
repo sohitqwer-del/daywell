@@ -17,8 +17,15 @@ export default function LiveCamera({
     [busy, setBusy] = useState(false),
     [torch, setTorch] = useState(false),
     [canTorch, setCanTorch] = useState(false);
+  const alive = useRef(true);
+  const [attempt, setAttempt] = useState(0);
   useEffect(() => {
     let active = true;
+    alive.current = true;
+    setReady(false);
+    setError("");
+    setTorch(false);
+    setCanTorch(false);
     document.documentElement.classList.add("live-camera-active");
     const start = async () => {
       await new Promise<void>((resolve) =>
@@ -43,8 +50,12 @@ export default function LiveCamera({
           return;
         }
         setReady(true);
-        const modes = await CameraPreview.getSupportedFlashModes();
-        if (active) setCanTorch(modes.result.includes("torch"));
+        try {
+          const modes = await CameraPreview.getSupportedFlashModes();
+          if (active) setCanTorch(modes.result.includes("torch"));
+        } catch {
+          if (active) setCanTorch(false);
+        }
       } catch (e) {
         if (active)
           setError(
@@ -55,13 +66,16 @@ export default function LiveCamera({
     void start();
     return () => {
       active = false;
+      alive.current = false;
       document.documentElement.classList.remove("live-camera-active");
       void CameraPreview.stop().catch(() => {});
     };
-  }, []);
+  }, [attempt]);
   async function close(next: () => void) {
-    await CameraPreview.stop().catch(() => {});
+    // Never leave navigation waiting on a pending camera permission/start call.
+    alive.current = false;
     next();
+    void CameraPreview.stop().catch(() => {});
   }
   async function capture() {
     if (!ready || busy) return;
@@ -73,14 +87,21 @@ export default function LiveCamera({
         height: 1280,
         quality: 85,
       });
+      if (!alive.current) return;
       await CameraPreview.stop();
-      const next = await preparePhoto(`data:image/jpeg;base64,${photo.value}`);
-      onPhoto(next);
+      setReady(false);
+      const next = await preparePhoto(
+        photo.value.startsWith("data:")
+          ? photo.value
+          : `data:image/jpeg;base64,${photo.value}`,
+      );
+      if (alive.current) onPhoto(next);
     } catch {
       setError(
         "Could not capture that photo. Try again or use the system camera.",
       );
       setBusy(false);
+      setReady(false);
     }
   }
   return (
@@ -149,9 +170,20 @@ export default function LiveCamera({
         </button>
       </div>
       {error && (
-        <p role="alert" className="error-text">
-          {error}
-        </p>
+        <>
+          <p role="alert" className="error-text">
+            {error}
+          </p>
+          <button
+            className="button wide"
+            onClick={() => {
+              setBusy(false);
+              setAttempt((value) => value + 1);
+            }}
+          >
+            Restart camera
+          </button>
+        </>
       )}
       <button
         className="text-button camera-fallback"

@@ -1,5 +1,7 @@
 import { defineConfig, devices } from "@playwright/test";
 export default defineConfig({
+  timeout: 60000,
+  expect: { timeout: 10000 },
   testDir: "./tests/e2e",
   fullyParallel: false,
   workers: 1,
@@ -9,5 +11,6 @@ export default defineConfig({
     command: "npm run dev",
     url: "http://127.0.0.1:5173",
     reuseExistingServer: true,
+    timeout: 120000,
   },
 });

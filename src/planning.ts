@@ -106,6 +106,7 @@ export async function askPlanning(
   instructions: string,
   input: unknown,
   image?: string,
+  responseSchema?: Record<string, unknown>,
 ) {
   if (!isNative || s.settings.aiMode === "offline")
     throw Error("Connect ChatGPT or an API key to generate a GPT plan.");
@@ -127,6 +128,7 @@ export async function askPlanning(
     instructions,
     input: JSON.stringify(input),
     ...(image ? { image } : {}),
+    ...(responseSchema ? { responseSchema } : {}),
   });
   commit((s) => {
     s.usage.input += result.input || 0;

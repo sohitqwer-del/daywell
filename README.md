@@ -6,7 +6,17 @@ Source: https://github.com/sohitqwer-del/daywell
 
 [Download Android beta](https://github.com/sohitqwer-del/daywell/releases)
 
-## Version 1.2 beta
+## Version 1.3 beta
+
+Recognition now follows a reviewable pipeline: photo -> dish suggestions -> matching foods -> your confirmation -> portions -> diary. The vision provider does not supply the nutrition numbers used for this new flow; Daywell calculates them from your chosen library entries. Alternatives and qualitative uncertainty help you correct ambiguous dishes. Unknown dishes stay unestimated.
+
+Opt-in label choices can improve later label matching and are removable from Memory. This does not train a visual model or enable offline image classification. Recognition requires a connected provider; no real-photo accuracy benchmark has been performed.
+
+New-meal photos and form details save as a private draft. Resume or discard the draft when you return. Drafts are not included in logged-meal exports. Rotation and low-light/small-image warnings are available.
+
+See [1.3 verification boundaries](VALIDATION-1.3.md).
+
+## Previous release: 1.2
 
 - In-app camera preview with zoom, shutter, camera switching and supported torch. System camera and gallery remain available.
 - Meal photos can use different portions for each dish: all the dal, half the rice, none of another item.
@@ -27,7 +37,7 @@ New in this release: a compact home screen, food and workout timeline, camera/ga
 
 ## Use it
 
-Install `artifacts/Daywell-1.2.0-debug.apk` on Android 8 or later. This is a development-signed build for personal testing, not a Play Store release. Keep Android System WebView updated. The OnePlus 7 Pro on Android 11 is supported by the chosen runtime.
+Install `artifacts/Daywell-1.3.0-debug.apk` on Android 8 or later. This is a development-signed build for personal testing, not a Play Store release. Keep Android System WebView updated. The OnePlus 7 Pro on Android 11 is supported by the chosen runtime.
 
 Start a clean space or explicitly choose sample data. Offline features need no account, subscription, or server.
 

@@ -780,6 +780,23 @@ public class WellnessPlugin extends Plugin {
           )
         );
         body.put("reasoning", new JSONObject().put("effort", "low"));
+        JSObject responseSchema = call.getObject("responseSchema");
+        if (!oauth && responseSchema != null) {
+          if (responseSchema.toString().length() > 30000) throw new IOException(
+            "The response schema is too large."
+          );
+          body.put(
+            "text",
+            new JSONObject().put(
+              "format",
+              new JSONObject()
+                .put("type", "json_schema")
+                .put("name", "daywell_food_recognition")
+                .put("strict", true)
+                .put("schema", new JSONObject(responseSchema.toString()))
+            )
+          );
+        }
         if (!oauth) body.put("max_output_tokens", 3000);
         c = connect(RESOURCE + "/responses", "POST", token);
         c.setRequestProperty("Content-Type", "application/json");

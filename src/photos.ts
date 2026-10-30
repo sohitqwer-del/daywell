@@ -5,6 +5,11 @@ const isNative = Capacitor.isNativePlatform();
 import { uid, type State } from "./domain";
 
 const jpeg = /^data:image\/jpeg;base64,[A-Za-z0-9+/=]+$/;
+export interface PreparedPhoto {
+  image: string;
+  thumbnail: string;
+  qualityWarnings?: string[];
+}
 async function photoDb() {
   return new Promise<IDBDatabase>((resolve, reject) => {
     const r = indexedDB.open("daywell-photos", 1);
@@ -27,9 +32,7 @@ async function webPhoto(id: string, data?: string) {
     db.close();
   }
 }
-export async function preparePhoto(
-  url: string,
-): Promise<{ image: string; thumbnail: string }> {
+export async function preparePhoto(url: string): Promise<PreparedPhoto> {
   const image = await new Promise<HTMLImageElement>((resolve, reject) => {
     const i = new Image();
     i.onload = () => resolve(i);
@@ -56,7 +59,48 @@ export async function preparePhoto(
     thumbnail = render(180, 0.5);
   if (result.length > 2_000_000 || thumbnail.length > 40000)
     throw Error("Photo is too large. Choose a smaller image.");
-  return { image: result, thumbnail };
+  const qualityWarnings: string[] = [];
+  if (image.naturalWidth < 240 || image.naturalHeight < 160)
+    qualityWarnings.push(
+      "This photo is small. A closer, higher-resolution photo may improve recognition.",
+    );
+  const sample = document.createElement("canvas");
+  sample.width = 64;
+  sample.height = 64;
+  const ctx = sample.getContext("2d");
+  if (ctx) {
+    ctx.drawImage(image, 0, 0, 64, 64);
+    const pixels = ctx.getImageData(0, 0, 64, 64).data;
+    let dark = 0;
+    for (let i = 0; i < pixels.length; i += 4)
+      if (
+        0.2126 * pixels[i] + 0.7152 * pixels[i + 1] + 0.0722 * pixels[i + 2] <
+        22
+      )
+        dark++;
+    if (dark / (pixels.length / 4) > 0.8)
+      qualityWarnings.push(
+        "This photo is very dark. Add light or retake it before identifying foods.",
+      );
+  }
+  return { image: result, thumbnail, qualityWarnings };
+}
+export async function rotatePhoto(data: string) {
+  const img = await new Promise<HTMLImageElement>((resolve, reject) => {
+    const image = new Image();
+    image.onload = () => resolve(image);
+    image.onerror = () => reject(Error("Photo could not be rotated."));
+    image.src = data;
+  });
+  const canvas = document.createElement("canvas");
+  canvas.width = img.naturalHeight;
+  canvas.height = img.naturalWidth;
+  const context = canvas.getContext("2d");
+  if (!context) throw Error("Photo editing is unavailable.");
+  context.translate(canvas.width / 2, canvas.height / 2);
+  context.rotate(Math.PI / 2);
+  context.drawImage(img, -img.naturalWidth / 2, -img.naturalHeight / 2);
+  return preparePhoto(canvas.toDataURL("image/jpeg", 0.85));
 }
 export async function takePhoto(source: "camera" | "gallery") {
   const photo = await Camera.getPhoto({
@@ -147,6 +191,7 @@ export async function restorePhotos(photos: Record<string, string>) {
   for (const [id, data] of Object.entries(photos)) await savePhoto(data, id);
 }
 export async function clearPhotos() {
+  await (await import("./photoDrafts")).clearPhotoDraft();
   if (isNative) {
     try {
       await Filesystem.rmdir({

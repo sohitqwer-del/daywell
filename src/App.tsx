@@ -1119,6 +1119,10 @@ export default function App() {
                   else s.meals[index] = meal;
                 });
                 setSheet(null);
+                if (meal.date !== today) {
+                  setDate(meal.date);
+                  setTab("Food");
+                }
                 haptic();
                 notify("Photo meal saved with your portion");
               }}
@@ -1511,7 +1515,12 @@ export default function App() {
             </>
           )}
           {sheet.kind === "memory" && (
-            <Memory memories={s.memories} commit={commit} />
+            <Memory
+              memories={s.memories}
+              corrections={s.recognitionCorrections}
+              foods={s.foods}
+              commit={commit}
+            />
           )}
           {sheet.kind === "ai" && (
             <AiSettings
@@ -1529,7 +1538,7 @@ export default function App() {
               <Logo />
               <h3>A little better. Built together.</h3>
               <p className="help">
-                Daywell 1.2.0 · MIT licensed. Offline food and strength
+                Daywell 1.3.0 · MIT licensed. Offline food and strength
                 tracking, with optional AI and read-only Health Connect imports.
               </p>
               <h3>Privacy</h3>
@@ -2463,9 +2472,13 @@ function SessionDetails({ session: w }: { session: Session }) {
 }
 function Memory({
   memories,
+  corrections,
+  foods,
   commit,
 }: {
   memories: State["memories"];
+  corrections: State["recognitionCorrections"];
+  foods: Food[];
   commit: (f: (s: State) => void) => void;
 }) {
   return (
@@ -2526,6 +2539,39 @@ function Memory({
           <Plus size={17} /> Remember this
         </Button>
       </form>
+      <h3 className="settings-heading">Food label choices</h3>
+      <p className="help">
+        Only label choices you opted to remember appear here. They help library
+        matching and can be sent as hints on recognition requests. They are not
+        photos or visual-model training.
+      </p>
+      {corrections.map((choice) => (
+        <div className="memory-row" key={choice.id}>
+          <Leaf size={18} />
+          <p>
+            {choice.label}
+            <small>
+              Matches{" "}
+              {foods.find((food) => food.id === choice.foodId)?.name ||
+                "a removed library food"}{" "}
+              ? {choice.date}
+            </small>
+          </p>
+          <button
+            className="icon-button"
+            aria-label={"Forget food label " + choice.label}
+            onClick={() =>
+              commit((s) => {
+                s.recognitionCorrections = s.recognitionCorrections.filter(
+                  (item) => item.id !== choice.id,
+                );
+              })
+            }
+          >
+            <Trash2 size={16} />
+          </button>
+        </div>
+      ))}
     </>
   );
 }

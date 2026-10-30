@@ -8,6 +8,11 @@ export const plateItemSchema = z.object({
   fat: z.number().finite().min(0).max(1000),
   eatenPercent: z.number().min(0).max(100).default(100),
   nutritionKnown: z.boolean().default(true),
+  catalogFoodId: z.string().max(100).optional(),
+  recognizedName: z.string().max(150).optional(),
+  recognitionConfidence: z.enum(["high", "medium", "low"]).optional(),
+  confirmed: z.boolean().optional(),
+  visibleServings: z.number().finite().min(0.05).max(20).optional(),
 });
 export type PlateItem = z.infer<typeof plateItemSchema>;
 export const plateEstimateSchema = z.object({
@@ -34,6 +39,7 @@ export function parseEstimate(text: string) {
 export function plateTotals(items: PlateItem[], consumed = true) {
   return items.reduce(
     (sum, item) => {
+      if (!item.nutritionKnown) return sum;
       const factor = consumed ? item.eatenPercent / 100 : 1;
       return {
         calories: sum.calories + item.calories * factor,

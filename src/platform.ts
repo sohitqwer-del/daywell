@@ -32,6 +32,7 @@ interface NativeBridge {
     instructions: string;
     input: string;
     image?: string;
+    responseSchema?: Record<string, unknown>;
   }): Promise<{ text: string; input: number; output: number }>;
 }
 export const Native = registerPlugin<NativeBridge>("Wellness");
