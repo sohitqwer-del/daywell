@@ -128,7 +128,7 @@ Exported backups are plaintext and may include sensitive records. Keep them priv
 
 No placeholders are presented as connected services. Unsupported capabilities have explicit descriptions. General wellness tracking only; no diagnosis or medical treatment.
 
-Current verification boundaries: [VALIDATION-1.2.md](VALIDATION-1.2.md). Previous device checks: [VALIDATION-1.1.md](VALIDATION-1.1.md).
+Current verification boundaries: [VALIDATION-1.3.md](VALIDATION-1.3.md). Previous device checks: [VALIDATION-1.1.md](VALIDATION-1.1.md).
 
 ## Open source
 
